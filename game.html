@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Football Game</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            display: block;
+            margin: 0 auto;
+        }
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="480" height="320"></canvas>
+    <div id="game-over">
+        <h2>You Win!</h2>
+        <p>Final Score: 4 - 3</p>
+        <button onclick="location.reload()">Play Again</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const gameOverScreen = document.getElementById("game-over");
+
+        // Ball properties
+        let ballX = canvas.width/2;
+        let ballY = canvas.height - 30;
+        let ballRadius = 15;
+        let ballSpeedX = 0;
+        let ballSpeedY = 0;
+        let isKicked = false;
+
+        // Goal properties
+        const goalWidth = 150;
+        const goalHeight = 100;
+        const goalX = (canvas.width - goalWidth) / 2;
+        const goalY = 0;
+
+        // Player score and attempts
+        let playerScore = 0;
+        let attempts = 0;
+        const maxAttempts = 5; // Easy to win with fewer attempts
+
+        // Instructions
+        let instructions = "Click to kick the ball towards the goal!";
+
+        // Event listener for kicking
+        canvas.addEventListener("click", kickBall);
+
+        function kickBall(e) {
+            if (!isKicked) {
+                isKicked = true;
+                // Make it easy by giving generous speed towards goal
+                ballSpeedX = (Math.random() - 0.5) * 4; // Small random horizontal variation
+                ballSpeedY = -6; // Consistent upward speed
+                instructions = "";
+            }
+        }
+
+        // Draw functions
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballRadius, 0, Math.PI*2);
+            ctx.fillStyle = "#ffffff";
+            ctx.fill();
+            ctx.strokeStyle = "#000000";
+            ctx.stroke();
+            ctx.closePath();
+        }
+
+        function drawGoal() {
+            ctx.beginPath();
+            ctx.rect(goalX, goalY, goalWidth, goalHeight);
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.closePath();
+
+            // Draw net pattern
+            ctx.beginPath();
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 1;
+            for (let i = 10; i < goalWidth; i += 10) {
+                ctx.moveTo(goalX + i, goalY);
+                ctx.lineTo(goalX + i, goalY + goalHeight);
+            }
+            for (let i = 10; i < goalHeight; i += 10) {
+                ctx.moveTo(goalX, goalY + i);
+                ctx.lineTo(goalX + goalWidth, goalY + i);
+            }
+            ctx.stroke();
+        }
+
+        function drawScore() {
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "#000000";
+            ctx.fillText(`Score: ${playerScore}  Attempts: ${attempts}/${maxAttempts}`, 8, 20);
+        }
+
+        function drawInstructions() {
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "#000000";
+            ctx.fillText(instructions, canvas.width/2 - 100, canvas.height - 10);
+        }
+
+        // Check if ball scored
+        function checkGoal() {
+            if (ballY - ballRadius < goalY + goalHeight && 
+                ballX > goalX && 
+                ballX < goalX + goalWidth &&
+                ballSpeedY < 0) {
+                return true;
+            }
+            return false;
+        }
+
+        // Main game loop
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw field
+            ctx.fillStyle = "#4CAF50";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            drawGoal();
+            drawBall();
+            drawScore();
+            drawInstructions();
+
+            if (isKicked) {
+                ballX += ballSpeedX;
+                ballY += ballSpeedY;
+                ballSpeedY += 0.1; // Gravity
+
+                // Check for goal
+                if (checkGoal()) {
+                    playerScore++;
+                    resetBall();
+                }
+                // Ball out of bounds
+                else if (ballY > canvas.height || ballX < 0 || ballX > canvas.width) {
+                    attempts++;
+                    resetBall();
+                }
+            }
+
+            // Check win condition
+            if (attempts >= maxAttempts || playerScore >= 3) {
+                showGameOver();
+                return;
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        function resetBall() {
+            ballX = canvas.width/2;
+            ballY = canvas.height - 30;
+            ballSpeedX = 0;
+            ballSpeedY = 0;
+            isKicked = false;
+            instructions = "Click to kick again!";
+        }
+
+        function showGameOver() {
+            canvas.style.display = "none";
+            gameOverScreen.style.display = "block";
+        }
+
+        draw();
+    </script>
+</body>
+</html>
